@@ -1,0 +1,4 @@
+host:      # ip of the host
+port:      # ssh port of your machine (default is 22)
+username:  # username - the thing before @ symbol :)
+password:  # correcponding password
