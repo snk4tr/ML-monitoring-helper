@@ -11,6 +11,7 @@ def setup():
 
 def main(host: str, username: str, password: str):
     connector = SshConnector(host, username, password)
+    connector.list_files()
 
 
 if __name__ == "__main__":
