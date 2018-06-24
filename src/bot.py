@@ -1,20 +1,13 @@
-import logging
+import telegram
 
-from src.ssh_connector import SshConnector
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 
 class Bot:
-    def __init__(self, connector, token):
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                            level=logging.INFO)
-        # Enable logging
-        self.logger = logging.getLogger(__name__)
-
-        print('Inside Bot: logging has been set')
+    def __init__(self, connector, logger, token):
         # init connector
         self.connector = connector
-        print('Inside Bot: connector has been initialized')
+        self.logger = logger
 
         """Start the bot."""
         # Create the EventHandler and pass it your bot's token.
@@ -26,7 +19,8 @@ class Bot:
         # on different commands - answer in Telegram
         dp.add_handler(CommandHandler("start", self.start))
         dp.add_handler(CommandHandler("help", self.help))
-        dp.add_handler(CommandHandler('ls', self.ls))
+        dp.add_handler(CommandHandler('ls', self.list_files))
+        dp.add_handler(CommandHandler('gpu', self.gpu_stat))
 
         # on noncommand i.e message - echo the message on Telegram
         dp.add_handler(MessageHandler(Filters.text, self.echo))
@@ -36,14 +30,12 @@ class Bot:
 
         # Start the Bot
         updater.start_polling()
-        print('Inside Bot: after start polling')
 
         # Run the bot until you press Ctrl-C or the process receives SIGINT,
         # SIGTERM or SIGABRT. This should be used most of the time, since
         # start_polling() is non-blocking and will stop the bot gracefully.
-        print('Inside Bot: before idle')
         updater.idle()
-        print('Inside Bot: after idle')
+        self.logger.info("SSH ML bot stops its work! Bye! :)")
 
     # Define a few command handlers. These usually take the two arguments bot and
     # update. Error handlers also receive the raised TelegramError object in error.
@@ -57,14 +49,30 @@ class Bot:
 
     def echo(self, bot, update):
         """Echo the user message."""
-        update.message.reply_text(update.message.text)
+        chat_id = update.message.chat_id
+        bold_text = "*" + update.message.text + "*"
+        italic_text = "_" + update.message.text + "_"
+        bot.send_message(chat_id=chat_id,
+                         text=bold_text + ' ' + italic_text,
+                         parse_mode=telegram.ParseMode.MARKDOWN)
 
-    def error(self, bot, update, error):
+    def error(self, update, error):
         """Log Errors caused by Updates."""
         self.logger.warning('Update "%s" caused error "%s"', update, error)
 
-    def ls(self, bot, update):
+    def list_files(self, bot, update):
         reply = self.connector.list_files()
         update.message.reply_text(reply)
 
-
+    def gpu_stat(self, bot, update):
+        chat_id = update.message.chat_id
+        degree_sign = u'\N{DEGREE SIGN}'
+        name, util, usedm, totalm, temp = self.connector.gpu_stat()
+        reply = ''
+        reply += '`' + str(name) + '`\n'
+        reply += '*Utilization*: ' + str(util) + ' / ' + '100%\n'
+        reply += '*Memory*: ' + str(usedm) + ' / ' + str(totalm) + ' MB\n'
+        reply += '*Temperature*: `' + str(temp) + degree_sign + 'C`'
+        bot.send_message(chat_id=chat_id,
+                         text=reply,
+                         parse_mode=telegram.ParseMode.MARKDOWN)
