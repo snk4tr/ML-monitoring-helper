@@ -22,9 +22,6 @@ class Bot:
         dp.add_handler(CommandHandler('ls', self.list_files))
         dp.add_handler(CommandHandler('gpu', self.gpu_stat))
 
-        # on noncommand i.e message - echo the message on Telegram
-        dp.add_handler(MessageHandler(Filters.text, self.echo))
-
         # log all errors
         dp.add_error_handler(self.error)
 
@@ -32,8 +29,6 @@ class Bot:
         updater.start_polling()
 
         # Run the bot until you press Ctrl-C or the process receives SIGINT,
-        # SIGTERM or SIGABRT. This should be used most of the time, since
-        # start_polling() is non-blocking and will stop the bot gracefully.
         updater.idle()
         self.logger.info("SSH ML bot stops its work! Bye! :)")
 
@@ -46,15 +41,6 @@ class Bot:
     def help(self, bot, update):
         """Send a message when the command /help is issued."""
         update.message.reply_text('Help!')
-
-    def echo(self, bot, update):
-        """Echo the user message."""
-        chat_id = update.message.chat_id
-        bold_text = "*" + update.message.text + "*"
-        italic_text = "_" + update.message.text + "_"
-        bot.send_message(chat_id=chat_id,
-                         text=bold_text + ' ' + italic_text,
-                         parse_mode=telegram.ParseMode.MARKDOWN)
 
     def error(self, update, error):
         """Log Errors caused by Updates."""
