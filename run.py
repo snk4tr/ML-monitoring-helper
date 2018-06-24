@@ -1,21 +1,22 @@
 import yaml
 
-from ssh_connector import SshConnector
+from src.ssh_connector import SshConnector
+from src.bot import Bot
 
 
 def setup():
     config_path = './config.yaml'
     config = yaml.load(open(config_path, 'r'))
-    return config['host'], config['port'], config['username'], config['password']
+    return config['host'], config['port'], config['username'], config['password'], config['token']
 
 
-def main(host: str, port: str, username: str, password: str):
+def main():
+    host, port, username, password, token = setup()
+    print('Setup finished!')
     connector = SshConnector(host, port, username, password)
-    connector.connect()
-    connector.list_files()
+    print('Connection finished!')
+    bot = Bot(connector, token)
 
 
-if __name__ == "__main__":
-    host, port, username, password = setup()
-
-    main(host, port, username, password)
+if __name__ == '__main__':
+    main()

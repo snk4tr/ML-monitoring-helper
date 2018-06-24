@@ -1,2 +1,3 @@
 parallel-ssh
 pyyaml
+python-telegram-bot
