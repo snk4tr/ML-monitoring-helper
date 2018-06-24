@@ -32,25 +32,30 @@ class Bot:
         updater.idle()
         self.logger.info("SSH ML bot stops its work! Bye! :)")
 
-    # Define a few command handlers. These usually take the two arguments bot and
-    # update. Error handlers also receive the raised TelegramError object in error.
     def start(self, bot, update):
         """Send a message when the command /start is issued."""
         update.message.reply_text('Hi!')
 
     def help(self, bot, update):
-        """Send a message when the command /help is issued."""
-        update.message.reply_text('Help!')
+        """Send helping information about how the bot works when the command /help is issued."""
+        chat_id = update.message.chat_id
+        reply = 'There are a few pretty useful commands for you to try:\n/gpu - provides *gpustat*-like info about ' \
+                'current work machine load.\n/ls - performs plain old *ls* command (lists files in current directory).'
+        bot.send_message(chat_id=chat_id,
+                         text=reply,
+                         parse_mode=telegram.ParseMode.MARKDOWN)
 
     def error(self, update, error):
         """Log Errors caused by Updates."""
         self.logger.warning('Update "%s" caused error "%s"', update, error)
 
     def list_files(self, bot, update):
+        """List files in current directory"""
         reply = self.connector.list_files()
         update.message.reply_text(reply)
 
     def gpu_stat(self, bot, update):
+        """Provide detailed information about current GPU usage."""
         chat_id = update.message.chat_id
         degree_sign = u'\N{DEGREE SIGN}'
         name, util, usedm, totalm, temp = self.connector.gpu_stat()
