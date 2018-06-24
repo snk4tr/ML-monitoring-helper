@@ -1,0 +1,8 @@
+version: '3'
+services:
+  telegram-ssh-ml:
+    build: .
+    volumes:
+    - .:/code
+    stdin_open: true            # required for an interactive bash terminal
+    tty: true                   # required for an interactive bash terminal
