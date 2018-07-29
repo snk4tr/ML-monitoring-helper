@@ -1,5 +1,9 @@
-host:      # ip of the host
-port:      # ssh port of your machine (default is 22)
-username:  # username - the thing before @ symbol :)
-password:  # correcponding password
-token:     # your telegram bot token
+host:          # host's ip
+port:          # ssh port of your machine (default is 22)
+username:      # username - the thing before @ symbol :)
+password:      # correcponding password
+token:         # your telegram bot token
+
+mem_thresh:    # memory usage threshold indicating that learning has been started. 0.5 recommended
+util_thresh:   # gpu utilization threshold indicating that learning has been started. 10 recommended
+watch_freq:    # frequency of checking whether learning has been started or stopped (seconds). 1 recommended
