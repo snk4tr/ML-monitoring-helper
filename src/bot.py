@@ -81,11 +81,9 @@ class Bot:
         """Periodically check whether learning has been started/stopped."""
         _, util, usedm, totalm, _ = self.connector.get_gpu_stat()
         mem_usage = usedm / totalm
-        if self.__learning_stopped(mem_usage, util):
+        if not self.is_learning and mem_usage > self.mem_thresh and util > self.util_thresh:
             self.__start_learning(bot, job)
-        if not self.__learning_stopped(mem_usage, util):
-            if not self.is_learning:
-                return
+        if self.is_learning and mem_usage < self.mem_thresh and util < self.util_thresh:
             self.__stop_learning(bot, job)
 
     def __learning_stopped(self, mem_usage, util):
