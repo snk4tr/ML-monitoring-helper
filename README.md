@@ -1,4 +1,4 @@
-# telegram-ssh-ml-bot
+# ML monitoring helper
 Telegram bot made to simplify management of ML and DL routines.
 
 ### Prerequisites
