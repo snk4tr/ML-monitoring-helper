@@ -2,6 +2,7 @@ import telegram
 import time
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.error import TelegramError, BadRequest, TimedOut, ChatMigrated, NetworkError
 from src.util.text_bulder import construct_gpu_stat_reply, construct_help_reply
 
 
@@ -17,6 +18,7 @@ class Bot:
         self.watching = False
         self.is_learning = False
         self.start_learning_time = None
+        self.chat_id = None
 
         # Create the EventHandler and pass it your bot's token.
         self.updater = Updater(config['token'])
@@ -44,16 +46,32 @@ class Bot:
 
     def help(self, bot, update):
         """Send helping information about how the bot works when the command /help is issued."""
-        chat_id = update.message.chat_id
+        self.chat_id = update.message.chat_id
         reply = construct_help_reply()
-        bot.send_message(chat_id=chat_id, text=reply, parse_mode=telegram.ParseMode.MARKDOWN)
+        bot.send_message(chat_id=self.chat_id, text=reply, parse_mode=telegram.ParseMode.MARKDOWN)
 
-    def error(self, update, error):
-        """Log Errors caused by Updates."""
-        self.logger.warning('Update "%s" caused error "%s"', update, error)
+    def error(self, bot, update, error):
+        try:
+            raise error
+        except BadRequest:
+            if len(update.message) > telegram.constants.MAX_MESSAGE_LENGTH:
+                message = update.message
+                self.logger.exception(f'Message appeared to be too long: {message}')
+        except TimedOut:
+            # handle slow connection problems. Pass since ssh connector will reconnect automatically.
+            pass
+        except NetworkError:
+            # handle other connection problems. Same reason for pass.
+            pass
+        except ChatMigrated as e:
+            # the chat_id of a group has changed, use e.new_chat_id instead
+            self.chat_id = e.new_chat_id
+        except TelegramError:
+            self.logger.warning('Update "%s" caused error "%s"', update, error)
 
     def unknown(self, bot, update):
-        bot.send_message(chat_id=update.message.chat_id, text="Sorry, I didn't understand that command 🆘")
+        self.chat_id = update.message.chat_id
+        bot.send_message(chat_id=self.chat_id, text="Sorry, I didn't understand that command 🆘")
 
     def list_files(self, bot, update):
         """List files in current directory."""
@@ -62,19 +80,19 @@ class Bot:
 
     def get_gpu_stat(self, bot, update):
         """Provide detailed information about current GPU usage."""
-        chat_id = update.message.chat_id
+        self.chat_id = update.message.chat_id
         reply = construct_gpu_stat_reply(self.connector)
-        bot.send_message(chat_id=chat_id, text=reply, parse_mode=telegram.ParseMode.MARKDOWN)
+        bot.send_message(chat_id=self.chat_id, text=reply, parse_mode=telegram.ParseMode.MARKDOWN)
 
     def watch_learning(self, bot, update, job_queue):
         """Start/stop monitoring or learning on the remote machine."""
-        chat_id = update.message.chat_id
+        self.chat_id = update.message.chat_id
         self.watching = not self.watching
         if self.watching:
-            bot.send_message(chat_id=chat_id, text='Monitoring of learning has been started!📡')
-            job_queue.run_repeating(self.__watch, self.config.get('watch_freq'), context=update.message.chat_id)
+            bot.send_message(chat_id=self.chat_id, text='Monitoring of learning has been started!📡')
+            job_queue.run_repeating(self.__watch, self.config.get('watch_freq'), context=self.chat_id)
             return
-        bot.send_message(chat_id=chat_id, text='Monitoring of learning has been stopped❗️❌')
+        bot.send_message(chat_id=self.chat_id, text='Monitoring of learning has been stopped❗️❌')
         job_queue.enabled = self.watching
 
     def __watch(self, bot, job):
@@ -103,7 +121,7 @@ class Bot:
 
     def stop_bot(self, bot, update):
         """Make bot inactive. The program will still be running though"""
-        chat_id = update.message.chat_id
+        self.chat_id = update.message.chat_id
         text = 'Bot is finishing its work. See ya! 😏'
-        bot.send_message(chat_id=chat_id, text=text, parse_mode=telegram.ParseMode.MARKDOWN)
+        bot.send_message(chat_id=self.chat_id, text=text, parse_mode=telegram.ParseMode.MARKDOWN)
         self.updater.stop()
