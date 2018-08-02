@@ -22,11 +22,14 @@ class SshConnector:
             (ParallelSSHClient) ssh connection object.
         """
         try:
-            return ParallelSSHClient(
+            connection = ParallelSSHClient(
                 hosts=[self.host], port=self.port, user=self.username, password=self.password)
+            self.logger.info('SSH connection has been successfully established.')
+            return connection
 
         except AuthenticationException as e:
-            print('Authentication failure! Credentials must be wrong!', e)
+            self.logger.exception('Authentication failure! Credentials must be wrong!')
+            exit(1)
 
     def list_files(self):
         """
