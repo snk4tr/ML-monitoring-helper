@@ -1,7 +1,12 @@
 FROM python
 
 RUN apt-get update && \
-     apt-get -y install mc
+    apt-get -y install mc && \
+    apt-get update && \
+    apt-get install -y curl && \
+    cd /usr/local/bin && curl https://getmic.ro | bash && \
+    apt-get install tk-dev -y && \
+    apt-get install python3-tk -y
 
 WORKDIR /code
 

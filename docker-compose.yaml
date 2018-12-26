@@ -1,6 +1,7 @@
 version: '3'
 services:
-  telegram-ssh-ml:
+  ml-monitoring-helper:
+    image: ml-monitoring-helper:26-12-18
     build: .
     volumes:
     - .:/code
